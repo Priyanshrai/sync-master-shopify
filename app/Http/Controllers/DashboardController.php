@@ -19,9 +19,11 @@ class DashboardController extends Controller
             ['connection_id' => $this->generateUniqueConnectionId()]
         );
 
+        $connectedShops = $connection->connectedStores->pluck('shop_domain')->toArray();
+
         return view('dashboard', [
             'connectionId' => $connection->connection_id,
-            'connectedShop' => $connection->connected_to,
+            'connectedShops' => $connectedShops,
             'shopDomain' => $shopDomain
         ]);
     }
@@ -55,11 +57,6 @@ class DashboardController extends Controller
             ]);
 
             $shop = $request->user();
-            if (!$shop) {
-                \Log::error('User not authenticated in connect method');
-                return response()->json(['error' => 'Authentication failed'], 401);
-            }
-
             $shopDomain = $shop->getDomain()->toNative();
             $connection = StoreConnection::where('shop_domain', $shopDomain)->firstOrFail();
             $targetConnection = StoreConnection::where('connection_id', $request->connection_id)->firstOrFail();
@@ -68,14 +65,12 @@ class DashboardController extends Controller
                 return response()->json(['error' => 'Cannot connect to your own store'], 400);
             }
 
-            if ($targetConnection->connected_to) {
-                return response()->json(['error' => 'The target store is already connected to another store'], 400);
+            if ($connection->connectedStores->contains($targetConnection->shop_domain)) {
+                return response()->json(['error' => 'Already connected to this store'], 400);
             }
 
-            $connection->connected_to = $targetConnection->shop_domain;
-            $connection->save();
-            $targetConnection->connected_to = $shopDomain;
-            $targetConnection->save();
+            $connection->connectedStores()->attach($targetConnection->shop_domain);
+            $targetConnection->connectedStores()->attach($shopDomain);
 
             \Log::info('Store connection successful', [
                 'current_shop' => $shopDomain,
@@ -95,28 +90,23 @@ class DashboardController extends Controller
     {
         try {
             $shop = $request->user();
-            if (!$shop) {
-                \Log::error('User not authenticated in disconnect method');
-                return response()->json(['error' => 'Authentication failed'], 401);
-            }
-
             $shopDomain = $shop->getDomain()->toNative();
             $connection = StoreConnection::where('shop_domain', $shopDomain)->firstOrFail();
 
-            if (!$connection->connected_to) {
-                return response()->json(['error' => 'Your store is not connected to any other store'], 400);
+            $targetShopDomain = $request->input('shop_domain');
+            if (!$targetShopDomain) {
+                return response()->json(['error' => 'Target shop domain is required'], 400);
             }
 
-            $targetConnection = StoreConnection::where('shop_domain', $connection->connected_to)->first();
-            if ($targetConnection) {
-                $targetConnection->connected_to = null;
-                $targetConnection->save();
+            $targetConnection = StoreConnection::where('shop_domain', $targetShopDomain)->first();
+            if (!$targetConnection) {
+                return response()->json(['error' => 'Target shop not found'], 404);
             }
 
-            $connection->connected_to = null;
-            $connection->save();
+            $connection->connectedStores()->detach($targetShopDomain);
+            $targetConnection->connectedStores()->detach($shopDomain);
 
-            \Log::info('Store disconnection successful', ['current_shop' => $shopDomain]);
+            \Log::info('Store disconnection successful', ['current_shop' => $shopDomain, 'disconnected_from' => $targetShopDomain]);
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
             \Log::error('Store disconnection failed: ' . $e->getMessage());

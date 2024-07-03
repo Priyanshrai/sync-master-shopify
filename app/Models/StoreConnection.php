@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class StoreConnection extends Model
 {
-    use HasFactory;
+    protected $fillable = ['shop_domain', 'connection_id'];
 
-    protected $fillable = ['shop_domain', 'connection_id', 'connected_to'];
+    public function connectedStores()
+    {
+        return $this->belongsToMany(StoreConnection::class, 'store_connections_pivot', 'store_connection_id', 'connected_shop_domain', 'id', 'shop_domain');
+    }
 }
