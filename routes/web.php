@@ -8,8 +8,6 @@ Route::get('/', [DashboardController::class, 'index'])->middleware(['verify.shop
 Route::post('/connect', [DashboardController::class, 'connect'])->middleware(['verify.shopify'])->name('connect');
 Route::post('/disconnect', [DashboardController::class, 'disconnect'])->middleware(['verify.shopify'])->name('disconnect');
 
-// Update this line
-Route::post('/webhook/app-uninstalled', [WebhookController::class, 'handleAppUninstalled'])->name('webhook.app-uninstalled');
 Route::get('/help', function () {
     return view('help');
 })->middleware(['verify.shopify'])->name('help');
