@@ -53,6 +53,36 @@
     @parent
     <script type="text/javascript">
         actions.TitleBar.create(app, { title: 'Magic Sync Master' });
+        var createApp = window['app-bridge'].default;
+                var actions = window['app-bridge'].actions;
+                var AppLink = actions.AppLink;
+                var NavigationMenu = actions.NavigationMenu;
+
+                var app = createApp({
+                    apiKey: "{{ \Osiset\ShopifyApp\Util::getShopifyConfig('api_key', $shopDomain ?? Auth::user()->name ) }}",
+                    host: "{{ \Request::get('host') }}",
+                    forceRedirect: true,
+                });
+
+                const dashboardLink = AppLink.create(app, {
+                    label: 'Dashboard',
+                    destination: '/',
+                });
+
+                const helpLink = AppLink.create(app, {
+                    label: 'Help',
+                    destination: '/help',
+                });
+
+                const navigationMenu = NavigationMenu.create(app, {
+                    items: [dashboardLink, helpLink],
+                    active: dashboardLink,
+                });
+
+                navigationMenu.subscribe(NavigationMenu.Action.LINK_UPDATE, (payload) => {
+                    const { url } = payload;
+                    window.location.href = url;
+                });
 
         function showMessage(message, isError = false) {
             const messageElement = document.getElementById('message');

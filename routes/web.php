@@ -10,3 +10,6 @@ Route::post('/disconnect', [DashboardController::class, 'disconnect'])->middlewa
 
 // Update this line
 Route::post('/webhook/app-uninstalled', [WebhookController::class, 'handleAppUninstalled'])->name('webhook.app-uninstalled');
+Route::get('/help', function () {
+    return view('help');
+})->middleware(['verify.shopify'])->name('help');

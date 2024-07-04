@@ -35,6 +35,7 @@
                     host: "{{ \Request::get('host') }}",
                     forceRedirect: true,
                 });
+                  
             </script>
 
             @include('shopify-app::partials.token_handler')
