@@ -14,10 +14,4 @@ Route::get('/help', function () {
 })->middleware(['verify.shopify'])->name('help');
 
 
-Route::get('/proxy', function () {
-    return response()->json([
-        'connectionId' => 'your_connection_id_here',
-        'message' => 'Hello from Laravel!',
-        'timestamp' => now()->toIso8601String()
-    ]);
-})->middleware('auth.proxy');
+Route::get('/proxy', 'AppProxyController@index')->middleware('auth.proxy');

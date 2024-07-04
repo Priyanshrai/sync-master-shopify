@@ -1,0 +1,17 @@
+<div id="magic-sync-master-block">
+    <h2>Magic Sync Master</h2>
+    <div id="connection-id"></div>
+    <ul id="product-list"></ul>
+  </div>
+  
+  {% schema %}
+  {
+    "name": "Magic Sync Master",
+    "target": "body",
+    "stylesheet": "app.css",
+    "javascript": "app.js",
+    "settings": []
+  }
+  {% endschema %}
+  
+  <script src="{{ 'app.js' | asset_url }}#shop={{ shop.permanent_domain }}" defer></script>
