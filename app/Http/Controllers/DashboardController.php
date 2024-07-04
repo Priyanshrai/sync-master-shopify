@@ -75,7 +75,8 @@ class DashboardController extends Controller
             $targetConnection->connectedStores()->attach($shopDomain);
     
             // Dispatch the sync job
-            SyncStoreData::dispatch($shop, $targetConnection->shop);
+            SyncStoreData::dispatch($shop->getDomain()->toNative(), $targetConnection->shop_domain);
+            // SyncStoreData::dispatch($shop, $targetConnection->shop);
             \Log::info('SyncStoreData job dispatched', [
                 'source_shop' => $shopDomain,
                 'target_shop' => $targetConnection->shop_domain,
