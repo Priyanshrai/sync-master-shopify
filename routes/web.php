@@ -15,3 +15,4 @@ Route::get('/help', function () {
 
 
 Route::get('/proxy', 'AppProxyController@index')->middleware('auth.proxy');
+

@@ -380,14 +380,36 @@ return [
     |
     */
 
-   'webhooks' => [
+  'webhooks' => [
     [
-        'topic' => env('SHOPIFY_WEBHOOK_1_TOPIC', 'APP_UNINSTALLED'),
-        'address' => env('SHOPIFY_WEBHOOK_1_ADDRESS', 'https://(your-domain).com/webhook/app-uninstalled')
+        'topic' => env('SHOPIFY_WEBHOOK_APP_UNINSTALLED_TOPIC', 'APP_UNINSTALLED'),
+        'address' => env('SHOPIFY_WEBHOOK_APP_UNINSTALLED_ADDRESS', 'https://your-app-url.com/webhook/app-uninstalled')
     ],
-    // Add more webhooks if needed
+    [
+        'topic' => env('SHOPIFY_WEBHOOK_PRODUCTS_CREATE_TOPIC', 'PRODUCTS_CREATE'),
+        'address' => env('SHOPIFY_WEBHOOK_PRODUCTS_CREATE_ADDRESS', 'https://your-app-url.com/webhook/products-create')
+    ],
+    [
+        'topic' => env('SHOPIFY_WEBHOOK_PRODUCTS_UPDATE_TOPIC', 'PRODUCTS_UPDATE'),
+        'address' => env('SHOPIFY_WEBHOOK_PRODUCTS_UPDATE_ADDRESS', 'https://your-app-url.com/webhook/products-update')
+    ],
+    [
+        'topic' => env('SHOPIFY_WEBHOOK_CUSTOMERS_CREATE_TOPIC', 'CUSTOMERS_CREATE'),
+        'address' => env('SHOPIFY_WEBHOOK_CUSTOMERS_CREATE_ADDRESS', 'https://your-app-url.com/webhook/customers-create')
+    ],
+    [
+        'topic' => env('SHOPIFY_WEBHOOK_CUSTOMERS_UPDATE_TOPIC', 'CUSTOMERS_UPDATE'),
+        'address' => env('SHOPIFY_WEBHOOK_CUSTOMERS_UPDATE_ADDRESS', 'https://your-app-url.com/webhook/customers-update')
+    ],
+    [
+        'topic' => env('SHOPIFY_WEBHOOK_ORDERS_CREATE_TOPIC', 'ORDERS_CREATE'),
+        'address' => env('SHOPIFY_WEBHOOK_ORDERS_CREATE_ADDRESS', 'https://your-app-url.com/webhook/orders-create')
+    ],
+    [
+        'topic' => env('SHOPIFY_WEBHOOK_ORDERS_UPDATE_TOPIC', 'ORDERS_UPDATED'),
+        'address' => env('SHOPIFY_WEBHOOK_ORDERS_UPDATE_ADDRESS', 'https://your-app-url.com/webhook/orders-update')
+    ],
 ],
-
     /*
     |--------------------------------------------------------------------------
     | Shopify ScriptTags
