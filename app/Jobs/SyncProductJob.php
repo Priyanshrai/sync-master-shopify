@@ -8,6 +8,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 
 class SyncProductJob implements ShouldQueue
 {
@@ -27,15 +28,33 @@ class SyncProductJob implements ShouldQueue
 
     public function handle()
     {
+        Log::info("Starting SyncProductJob", [
+            'source_shop' => $this->shopDomain,
+            'target_shop' => $this->targetShopDomain,
+            'is_update' => $this->isUpdate
+        ]);
+
+        if (!is_array($this->productData) || !isset($this->productData['id'])) {
+            Log::error("Invalid product data", [
+                'source_shop' => $this->shopDomain,
+                'target_shop' => $this->targetShopDomain,
+                'product_data' => $this->productData
+            ]);
+            return;
+        }
+
         $targetShop = User::where('name', $this->targetShopDomain)->first();
         
         if (!$targetShop) {
-            \Log::error("Target shop not found: {$this->targetShopDomain}");
+            Log::error("Target shop not found", [
+                'target_shop' => $this->targetShopDomain,
+                'source_shop' => $this->shopDomain
+            ]);
             return;
         }
 
         $product = $this->productData;
-        $product['tags'] = isset($product['tags']) ? $product['tags'] . ", source:{$this->shopDomain}" : "source:{$this->shopDomain}";
+        $product['tags'] = $this->appendSourceTag($product['tags'] ?? '', $this->shopDomain);
 
         try {
             if ($this->isUpdate) {
@@ -43,19 +62,30 @@ class SyncProductJob implements ShouldQueue
             } else {
                 $response = $targetShop->api()->rest('POST', '/admin/api/2023-04/products.json', ['product' => $product]);
             }
-            \Log::info('Product synced to target shop', [
+
+            Log::info('Product synced to target shop', [
                 'product_id' => $product['id'],
                 'target_shop' => $this->targetShopDomain,
                 'response_status' => $response['status'],
                 'action' => $this->isUpdate ? 'update' : 'create'
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error syncing product', [
+            Log::error('Error syncing product', [
                 'error' => $e->getMessage(),
                 'product_id' => $product['id'],
                 'target_shop' => $this->targetShopDomain,
                 'action' => $this->isUpdate ? 'update' : 'create'
             ]);
         }
+    }
+
+    private function appendSourceTag($tags, $sourceShopDomain)
+    {
+        $sourceTag = "source:{$sourceShopDomain}";
+        $tagArray = array_map('trim', explode(',', $tags));
+        if (!in_array($sourceTag, $tagArray)) {
+            $tagArray[] = $sourceTag;
+        }
+        return implode(', ', $tagArray);
     }
 }
