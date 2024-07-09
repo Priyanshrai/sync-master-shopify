@@ -1,0 +1,18 @@
+{% schema %}
+{
+  "name": "Magic Sync Master",
+  "target": "section",
+  "stylesheet": "app-embed.css",
+  "javascript": "app-embed.js",
+  "settings": []
+}
+{% endschema %}
+
+<div id="magic-sync-master-block">
+  <h2>Magic Sync Master</h2>
+  <div id="connection-status">Checking connection...</div>
+  <h3>First 5 Products:</h3>
+  <ul id="product-list"></ul>
+</div>
+
+<script src="{{ 'app-embed.js' | asset_url }}#shop={{ shop.permanent_domain }}" defer></script>

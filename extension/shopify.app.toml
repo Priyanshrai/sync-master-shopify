@@ -1,24 +1,2 @@
-# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "cc10dfb2208781044a14046545edfa26"
 name = "Magic Sync Master"
-handle = "magic-sync-master"
-application_url = "https://18f0-103-247-52-224.ngrok-free.app/"
-embedded = true
-
-[build]
-include_config_on_deploy = true
-
-[auth]
-redirect_urls = [ "https://18f0-103-247-52-224.ngrok-free.app/authenticate" ]
-
-[webhooks]
-api_version = "2024-04"
-
-[app_proxy]
-url = "https://18f0-103-247-52-224.ngrok-free.app/proxy"
-subpath = "proxy"
-prefix = "apps"
-
-[pos]
-embedded = true
+scopes = "read_products,write_products"
