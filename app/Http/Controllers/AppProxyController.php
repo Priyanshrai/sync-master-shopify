@@ -3,40 +3,30 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\User;
 use App\Models\StoreConnection;
 
 class AppProxyController extends Controller
 {
-    public function getConnectionId(Request $request)
+    public function handleProxy(Request $request)
     {
-        \Log::info('Proxy route accessed');
-        try {
-            $shop = $request->user();
-            if (!$shop) {
-                \Log::error('No shop found in proxy request');
-                return response('Unauthorized', 401);
-            }
-            
-            $shopDomain = $shop->getDomain()->toNative();
-            \Log::info('Shop domain: ' . $shopDomain);
-            
-            $connection = StoreConnection::where('shop_domain', $shopDomain)->first();
-            
-            if (!$connection) {
-                \Log::error('No connection found for shop: ' . $shopDomain);
-                return response('No connection found', 404);
-            }
-            
-            \Log::info('Connection ID: ' . $connection->connection_id);
-            return response($connection->connection_id)->header('Content-Type', 'text/plain');
-        } catch (\Exception $e) {
-            \Log::error('Error in getConnectionId: ' . $e->getMessage());
-            return response('Error fetching connection ID: ' . $e->getMessage(), 500);
+        \Log::info('Proxy route accessed', $request->all());
+        
+        $shop = auth()->user();
+        if (!$shop) {
+            $shop = User::where('name', $request->get('shop'))->first();
         }
+        
+        if (!$shop) {
+            return response('Unauthorized', 401);
+        }
+        
+        $connection = StoreConnection::where('shop_domain', $shop->name)->first();
+        
+        if (!$connection) {
+            return response('No connection found', 404);
+        }
+        
+        return response($connection->connection_id)->header('Content-Type', 'text/plain');
     }
-    public function test()
-{
-    \Log::info('Proxy test route accessed');
-    return response('Proxy test successful')->header('Content-Type', 'text/plain');
-}
 }

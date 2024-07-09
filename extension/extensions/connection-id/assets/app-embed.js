@@ -1,5 +1,9 @@
 // Fetch the connection ID from the proxy route
-fetch('/apps/proxy')
+fetch('/apps/proxy', {
+  headers: {
+    'ngrok-skip-browser-warning': '69420'
+  }
+})
   .then(response => {
     if (!response.ok) {
       throw new Error('Network response was not ok: ' + response.statusText);
