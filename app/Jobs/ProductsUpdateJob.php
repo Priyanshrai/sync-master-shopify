@@ -9,6 +9,8 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Osiset\ShopifyApp\Objects\Values\ShopDomain;
 use stdClass;
+use App\Models\StoreConnection;
+use App\Jobs\SyncProductJob;
 
 class ProductsUpdateJob implements ShouldQueue
 {
@@ -67,13 +69,18 @@ class ProductsUpdateJob implements ShouldQueue
     protected function syncProductUpdateToConnectedStores()
     {
         $sourceShopDomain = $this->shopDomain->toNative();
-        $storeConnection = \App\Models\StoreConnection::where('shop_domain', $sourceShopDomain)->first();
+        $storeConnection = StoreConnection::where('shop_domain', $sourceShopDomain)->first();
 
         if ($storeConnection) {
             $connectedShops = $storeConnection->connectedStores;
             foreach ($connectedShops as $connectedShop) {
                 // Create a new job to sync this product update to the connected shop
-                SyncProductJob::dispatch($this->data, $sourceShopDomain, $connectedShop->shop_domain, true);
+                SyncProductJob::dispatch(
+                    $sourceShopDomain,
+                    $connectedShop->shop_domain,
+                    $this->data,
+                    true // This is an update, so isUpdate is true
+                );
             }
         }
     }

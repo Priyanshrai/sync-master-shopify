@@ -4,15 +4,34 @@
   "target": "section",
   "stylesheet": "app-embed.css",
   "javascript": "app-embed.js",
-  "settings": []
+  "settings": [
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background Color",
+      "default": "#f5f7fa"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text Color",
+      "default": "#2c3e50"
+    }
+  ]
 }
 {% endschema %}
 
-<div id="magic-sync-master-block">
+<div id="magic-sync-master-block" style="background-color: {{ block.settings.background_color }}; color: {{ block.settings.text_color }};">
   <h2>Magic Sync Master</h2>
-  <div id="connection-status">Checking connection...</div>
+  <div id="connection-status" class="status-box">Checking connection...</div>
+  <div class="control-panel">
+    <button id="sync-button" class="action-button">Sync Now</button>
+    <button id="refresh-button" class="action-button">Refresh Products</button>
+  </div>
   <h3>First 5 Products:</h3>
   <ul id="product-list"></ul>
+  <div id="sync-status" class="status-box">Last synced: Never</div>
 </div>
 
+{{ 'app-embed.css' | asset_url | stylesheet_tag }}
 <script src="{{ 'app-embed.js' | asset_url }}#shop={{ shop.permanent_domain }}" defer></script>

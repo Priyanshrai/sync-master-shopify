@@ -19,9 +19,10 @@ class SyncProductJob implements ShouldQueue
     public $productData;
     public $isUpdate;
 
-    public function __construct($shopDomain, $productData, $isUpdate = false)
+    public function __construct($shopDomain, $targetShopDomain, $productData, $isUpdate = false)
     {
         $this->shopDomain = $shopDomain;
+        $this->targetShopDomain = $targetShopDomain;
         $this->productData = $productData;
         $this->isUpdate = $isUpdate;
     }
@@ -35,7 +36,7 @@ class SyncProductJob implements ShouldQueue
             'product_data' => $this->productData
         ]);
 
-        if (empty($this->productData) || !is_array($this->productData)) {
+        if (empty($this->productData) || (!is_array($this->productData) && !is_object($this->productData))) {
             Log::error("Invalid product data", [
                 'source_shop' => $this->shopDomain,
                 'target_shop' => $this->targetShopDomain,
@@ -44,11 +45,13 @@ class SyncProductJob implements ShouldQueue
             return;
         }
 
-        if (!isset($this->productData['id'])) {
+        $product = (array)$this->productData;
+
+        if (!isset($product['id'])) {
             Log::error("Product ID is missing", [
                 'source_shop' => $this->shopDomain,
                 'target_shop' => $this->targetShopDomain,
-                'product_data' => $this->productData
+                'product_data' => $product
             ]);
             return;
         }
@@ -63,7 +66,6 @@ class SyncProductJob implements ShouldQueue
             return;
         }
 
-        $product = $this->productData;
         $product['tags'] = $this->appendSourceTag($product['tags'] ?? '', $this->shopDomain);
 
         try {
