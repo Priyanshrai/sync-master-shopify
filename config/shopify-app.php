@@ -446,6 +446,7 @@ return [
      * @see
      */
     'after_authenticate_job' => [
+        
         /*
             [
                 'job' => env('AFTER_AUTHENTICATE_JOB'), // example: \App\Jobs\AfterAuthorizeJob::class
@@ -594,4 +595,6 @@ return [
     'frontend_engine' => env('SHOPIFY_FRONTEND_ENGINE', 'BLADE'),
 
     'iframe_ancestors' => '',
+
+
 ];

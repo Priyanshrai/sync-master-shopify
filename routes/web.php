@@ -13,6 +13,9 @@ Route::get('/help', function () {
     return view('help');
 })->middleware(['verify.shopify'])->name('help');
 
+Route::get('/proxy', [AppProxyController::class, 'handleProxy'])->middleware('auth.proxy');
 
-Route::get('/proxy', 'AppProxyController@index')->middleware('auth.proxy');
 
+
+// Route::get('/proxy', [AppProxyController::class, 'getConnectionId'])->middleware(['auth.proxy']);
+// Route::get('/proxy-test', [AppProxyController::class, 'test']);
