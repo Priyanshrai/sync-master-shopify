@@ -163,10 +163,5 @@ Before you begin, ensure you have the following installed:
 - If you encounter any issues with webhooks, ensure your ngrok URL is correctly set in both the `.env` file and Shopify app settings.
 - Check the Laravel logs (`storage/logs/laravel.log`) for any error messages.
 
-## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
 
-## License
-
-This project is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
