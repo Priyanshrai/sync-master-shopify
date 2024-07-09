@@ -5,17 +5,13 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\AppProxyController;
 
-Route::get('/', [DashboardController::class, 'index'])->middleware(['verify.shopify'])->name('home');
-Route::post('/connect', [DashboardController::class, 'connect'])->middleware(['verify.shopify'])->name('connect');
-Route::post('/disconnect', [DashboardController::class, 'disconnect'])->middleware(['verify.shopify'])->name('disconnect');
-
-Route::get('/help', function () {
-    return view('help');
-})->middleware(['verify.shopify'])->name('help');
+Route::middleware(['verify.shopify'])->group(function () {
+    Route::get('/', [DashboardController::class, 'index'])->name('home');
+    Route::post('/connect', [DashboardController::class, 'connect'])->name('connect');
+    Route::post('/disconnect', [DashboardController::class, 'disconnect'])->name('disconnect');
+    Route::get('/help', function () {
+        return view('help');
+    })->name('help');
+});
 
 Route::get('/proxy', [AppProxyController::class, 'handleProxy'])->middleware('auth.proxy');
-
-
-
-// Route::get('/proxy', [AppProxyController::class, 'getConnectionId'])->middleware(['auth.proxy']);
-// Route::get('/proxy-test', [AppProxyController::class, 'test']);
