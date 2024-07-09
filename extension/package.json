@@ -1,13 +1,10 @@
 {
-    "name": "magic-sync-master", 
+    "name": "magic_sync_master",
     "private": true,
-    "license": "UNLICENSED",
     "scripts": {
       "shopify": "shopify",
       "build": "shopify app build",
-      "dev": "shopify app dev",
-      "info": "shopify app info",
-      "scaffold": "shopify app scaffold",
+      "dev": "shopify app dev", 
       "deploy": "shopify app deploy"
     },
     "dependencies": {

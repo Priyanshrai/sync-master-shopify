@@ -22,7 +22,7 @@ class SyncProductJob implements ShouldQueue
     public function __construct($shopDomain, $productData, $isUpdate = false)
     {
         $this->shopDomain = $shopDomain;
-        $this->productData = is_string($productData) ? json_decode($productData, true) : $productData;
+        $this->productData = $productData;
         $this->isUpdate = $isUpdate;
     }
 
@@ -31,11 +31,21 @@ class SyncProductJob implements ShouldQueue
         Log::info("Starting SyncProductJob", [
             'source_shop' => $this->shopDomain,
             'target_shop' => $this->targetShopDomain,
-            'is_update' => $this->isUpdate
+            'is_update' => $this->isUpdate,
+            'product_data' => $this->productData
         ]);
 
-        if (!is_array($this->productData) || !isset($this->productData['id'])) {
+        if (empty($this->productData) || !is_array($this->productData)) {
             Log::error("Invalid product data", [
+                'source_shop' => $this->shopDomain,
+                'target_shop' => $this->targetShopDomain,
+                'product_data' => $this->productData
+            ]);
+            return;
+        }
+
+        if (!isset($this->productData['id'])) {
+            Log::error("Product ID is missing", [
                 'source_shop' => $this->shopDomain,
                 'target_shop' => $this->targetShopDomain,
                 'product_data' => $this->productData
