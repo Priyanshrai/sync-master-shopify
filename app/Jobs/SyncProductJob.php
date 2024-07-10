@@ -26,9 +26,9 @@ class SyncProductJob implements ShouldQueue, ShouldBeUnique
     {
         $this->shopDomain = $shopDomain;
         $this->targetShopDomain = $targetShopDomain;
-        $this->productData = $productData;
+        $this->productData = is_string($productData) ? json_decode($productData, true) : $productData;
         $this->isUpdate = $isUpdate;
-        $this->uniqueJobIdentifier = 'sync_product_' . $productData->id . '_' . $targetShopDomain;
+        $this->uniqueJobIdentifier = 'sync_product_' . ($this->productData['id'] ?? '') . '_' . $targetShopDomain;
     }
 
     public function uniqueId()
@@ -45,38 +45,11 @@ class SyncProductJob implements ShouldQueue, ShouldBeUnique
             'product_data' => $this->productData
         ]);
 
-        if (empty($this->productData) || !is_object($this->productData)) {
+        if (empty($this->productData) || !isset($this->productData['id'])) {
             Log::error("Invalid product data", [
                 'source_shop' => $this->shopDomain,
                 'target_shop' => $this->targetShopDomain,
                 'product_data' => $this->productData
-            ]);
-            return;
-        }
-
-        $product = $this->productData;
-
-        if (!isset($product->id)) {
-            Log::error("Product ID is missing", [
-                'source_shop' => $this->shopDomain,
-                'target_shop' => $this->targetShopDomain,
-                'product_data' => $product
-            ]);
-            return;
-        }
-
-        // Check if the product has already been synced
-        $existingSyncedItem = SyncedItem::where('item_type', 'product')
-            ->where('item_id', $product->id)
-            ->where('source_shop_domain', $this->shopDomain)
-            ->where('target_shop_domain', $this->targetShopDomain)
-            ->first();
-
-        if ($existingSyncedItem) {
-            Log::info('Product already synced', [
-                'product_id' => $product->id,
-                'source_shop' => $this->shopDomain,
-                'target_shop' => $this->targetShopDomain
             ]);
             return;
         }
@@ -91,33 +64,35 @@ class SyncProductJob implements ShouldQueue, ShouldBeUnique
             return;
         }
 
-        $product->tags = $this->appendSourceTag($product->tags ?? '', $this->shopDomain);
+        $this->productData['tags'] = $this->appendSourceTag($this->productData['tags'] ?? '', $this->shopDomain);
 
         try {
             if ($this->isUpdate) {
-                $response = $targetShop->api()->rest('PUT', '/admin/api/2023-04/products/' . $product->id . '.json', ['product' => (array)$product]);
+                $response = $targetShop->api()->rest('PUT', '/admin/api/2023-07/products/' . $this->productData['id'] . '.json', ['product' => $this->productData]);
             } else {
-                $response = $targetShop->api()->rest('POST', '/admin/api/2023-04/products.json', ['product' => (array)$product]);
+                $response = $targetShop->api()->rest('POST', '/admin/api/2023-07/products.json', ['product' => $this->productData]);
             }
 
             Log::info('Product synced to target shop', [
-                'product_id' => $product->id,
+                'product_id' => $this->productData['id'],
                 'target_shop' => $this->targetShopDomain,
                 'response_status' => $response['status'],
                 'action' => $this->isUpdate ? 'update' : 'create'
             ]);
 
-            // Create a new synced item entry
-            SyncedItem::create([
-                'item_type' => 'product',
-                'item_id' => $product->id,
-                'source_shop_domain' => $this->shopDomain,
-                'target_shop_domain' => $this->targetShopDomain
-            ]);
+            SyncedItem::updateOrCreate(
+                [
+                    'item_type' => 'product',
+                    'item_id' => $this->productData['id'],
+                    'source_shop_domain' => $this->shopDomain,
+                    'target_shop_domain' => $this->targetShopDomain
+                ],
+                ['last_synced_at' => now()]
+            );
         } catch (\Exception $e) {
             Log::error('Error syncing product', [
                 'error' => $e->getMessage(),
-                'product_id' => $product->id,
+                'product_id' => $this->productData['id'],
                 'target_shop' => $this->targetShopDomain,
                 'action' => $this->isUpdate ? 'update' : 'create'
             ]);
