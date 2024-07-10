@@ -11,48 +11,30 @@ use Osiset\ShopifyApp\Objects\Values\ShopDomain;
 use stdClass;
 use App\Models\StoreConnection;
 use App\Jobs\SyncProductJob;
+use Illuminate\Support\Facades\DB;
 
 class ProductsUpdateJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /**
-     * Shop's myshopify domain
-     *
-     * @var ShopDomain|string
-     */
     public $shopDomain;
-
-    /**
-     * The webhook data
-     *
-     * @var object
-     */
     public $data;
 
-    /**
-     * Create a new job instance.
-     *
-     * @param string   $shopDomain The shop's myshopify domain.
-     * @param stdClass $data       The webhook data (JSON decoded).
-     *
-     * @return void
-     */
     public function __construct($shopDomain, $data)
     {
         $this->shopDomain = $shopDomain;
         $this->data = $data;
     }
 
-    /**
-     * Execute the job.
-     *
-     * @return void
-     */
     public function handle()
     {
         // Convert domain
         $this->shopDomain = ShopDomain::fromNative($this->shopDomain);
+
+        // Check if the product is being synced
+        if ($this->isSyncedProduct()) {
+            return;
+        }
 
         // Log the event
         \Log::info("Product updated in {$this->shopDomain->toNative()}: " . json_encode($this->data));
@@ -61,11 +43,6 @@ class ProductsUpdateJob implements ShouldQueue
         $this->syncProductUpdateToConnectedStores();
     }
 
-    /**
-     * Sync the product update to connected stores.
-     *
-     * @return void
-     */
     protected function syncProductUpdateToConnectedStores()
     {
         $sourceShopDomain = $this->shopDomain->toNative();
@@ -73,15 +50,28 @@ class ProductsUpdateJob implements ShouldQueue
 
         if ($storeConnection) {
             $connectedShops = $storeConnection->connectedStores;
+
             foreach ($connectedShops as $connectedShop) {
-                // Create a new job to sync this product update to the connected shop
-                SyncProductJob::dispatch(
-                    $sourceShopDomain,
-                    $connectedShop->shop_domain,
-                    $this->data,
-                    true // This is an update, so isUpdate is true
-                );
+                $uniqueJobIdentifier = 'sync_product_' . $this->data->id . '_' . $connectedShop->shop_domain;
+
+                $existingJob = DB::table('jobs')
+                    ->where('payload', 'like', "%{$uniqueJobIdentifier}%")
+                    ->exists();
+
+                if (!$existingJob) {
+                    SyncProductJob::dispatch(
+                        $sourceShopDomain,
+                        $connectedShop->shop_domain,
+                        $this->data,
+                        true
+                    );
+                }
             }
         }
+    }
+
+    private function isSyncedProduct()
+    {
+        return isset($this->data->tags) && strpos($this->data->tags, 'source:') !== false;
     }
 }
