@@ -8,7 +8,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Osiset\ShopifyApp\Objects\Values\ShopDomain;
-use stdClass;
 use App\Models\StoreConnection;
 use App\Jobs\SyncOrderJob;
 use Illuminate\Support\Facades\DB;
@@ -31,16 +30,19 @@ class OrdersUpdateJob implements ShouldQueue
     {
         $this->shopDomain = ShopDomain::fromNative($this->shopDomain);
 
-        if ($this->isSyncedOrder()) {
+        // Convert data to array if it's an object
+        $orderData = $this->convertToArray($this->data);
+
+        if ($this->isSyncedOrder($orderData)) {
             return;
         }
 
-        Log::info("Order updated in {$this->shopDomain->toNative()}: " . json_encode($this->data));
+        Log::info("Order updated in {$this->shopDomain->toNative()}: " . json_encode($orderData));
 
-        $this->syncOrderUpdateToConnectedStores();
+        $this->syncOrderUpdateToConnectedStores($orderData);
     }
 
-    protected function syncOrderUpdateToConnectedStores()
+    protected function syncOrderUpdateToConnectedStores($orderData)
     {
         $sourceShopDomain = $this->shopDomain->toNative();
         $storeConnection = StoreConnection::where('shop_domain', $sourceShopDomain)->first();
@@ -48,7 +50,7 @@ class OrdersUpdateJob implements ShouldQueue
         if ($storeConnection) {
             $connectedShops = $storeConnection->connectedStores;
             foreach ($connectedShops as $connectedShop) {
-                $uniqueJobIdentifier = 'sync_order_' . $this->data->id . '_' . $connectedShop->shop_domain;
+                $uniqueJobIdentifier = 'sync_order_' . $orderData['id'] . '_' . $connectedShop->shop_domain;
                 $existingJob = DB::table('jobs')
                     ->where('payload', 'like', "%{$uniqueJobIdentifier}%")
                     ->exists();
@@ -57,7 +59,7 @@ class OrdersUpdateJob implements ShouldQueue
                     SyncOrderJob::dispatch(
                         $sourceShopDomain,
                         $connectedShop->shop_domain,
-                        $this->data,
+                        $orderData,
                         true
                     );
                 }
@@ -65,8 +67,19 @@ class OrdersUpdateJob implements ShouldQueue
         }
     }
 
-    private function isSyncedOrder()
+    private function isSyncedOrder($orderData)
     {
-        return isset($this->data->tags) && strpos($this->data->tags, 'source:') !== false;
+        return isset($orderData['tags']) && strpos($orderData['tags'], 'source:') !== false;
+    }
+
+    private function convertToArray($data)
+    {
+        if (is_object($data)) {
+            if (method_exists($data, 'toArray')) {
+                return $data->toArray();
+            }
+            return json_decode(json_encode($data), true);
+        }
+        return $data;
     }
 }
